@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<exportconfig category="controlling" defaultFilename="planningandefforts.csv" 
+              description="exportConfig.personalEffortsByTimeRangeMXD" group="exportConfigGroup.controlling" groupNo="10" header="0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xsi:noNamespaceSchemaLocation="http://schema.projektron.de/bcs/bcs-export.xsd">
+  <detailInfo>txtDetailInfo.exportConfig.personalEffortsByTimeRange</detailInfo>
+  <externalParameters>
+    <param dataType="Date" name="startdate"/>
+    <param dataType="Date" name="enddate"/>
+  </externalParameters>
+  <sequence>
+    <process name="executeQuery"/>
+    <process name="formatAttributes"/>
+    <process name="valueMapping"/>
+    <process name="columnMapping"/>
+    <process name="resourceSearching"/>
+    <process name="csvExport"/>
+  </sequence>
+  <processes>
+    <process name="executeQuery">
+      <!-- Datenabfrage für alle Planungs und Buchungswerte -->
+      <query type="typFilter">
+        <parameter name="typ">JEffort</parameter>
+      </query>
+      <condition bcsAttrName="subtyp" operator="eq" valueType="fixed">Personal</condition>
+      <condition bcsAttrName="effortDate" operator="ge" valueType="computed">export.param.startdate</condition>
+      <condition bcsAttrName="effortDate" operator="le" valueType="computed">export.param.enddate</condition>
+	  <query type="treeFilter">
+            <parameter name="includeRoot">true</parameter>
+         </query>
+	 </process>
+    <!-- Formatierung in Abhängigkeit vom Datentyp -->
+    <process name="formatAttributes">
+      <format attrType="Date">dd.MM.yyyy</format>
+      <format attrType="Duration" timebase="m">{0}</format>
+      <format attrType="Time">HH:mm:ss</format>
+      <format attrType="DateTime">dd.MM.yyyy, HH:mm:ss</format>
+      <format attrType="Currency">{0}</format>
+      <format attrType="Bool">Ja;Nein</format>
+      <format attrType="Float">0.#</format>
+    </process>
+    <!-- Mapping der internen Attributnamen auf Exportspaltentitel -->
+    <process name="columnMapping">
+      <mapping id="effortUserOid">UserID</mapping>
+	  <mapping id="effortUserOid.name">Person_Nachname</mapping>
+      <mapping id="effortUserOid.userFirstname">Person_Vorname</mapping>
+	  <mapping id="effortTargetOid.grandParentOid.projectShortname">ProjektID</mapping>
+	  <mapping id="effortTargetOid.grandParentOid.name">Projekt</mapping>
+	  <mapping id="effortUserOid.parentOid.name">Projekttask</mapping>  
+      <mapping id="effortExpense">Duration</mapping>         
+	  <mapping id="effortDate">Date</mapping>
+    </process>
+    <process name="valueMapping">
+      <!-- verhindern von Nullwerten: -->
+      <mapping>
+        <condition bcsAttrName="effortTargetOid.startDate">01\.01\.1970</condition>
+        <action columnName="effortTargetOid.startDate"/>
+      </mapping>
+      <mapping>
+        <condition bcsAttrName="effortTargetOid.endDate">01\.01\.1970</condition>
+        <action columnName="effortTargetOid.endDate"/>
+      </mapping>
+      <mapping>
+        <condition bcsAttrName="effortDate">01\.01\.1970</condition>
+        <action columnName="effortDate"/>
+      </mapping>
+      <!-- kopieren von Monatswert von Datum -->
+      <mapping>
+        <condition bcsAttrName="effortDate">[0-9][0-9]\.([0-9][0-9])\.([0-9][0-9][0-9][0-9])</condition>
+        <reAction columnName="Monat"> $2$1</reAction>
+      </mapping>
+    </process>   
+   <process name="resourceSearching">
+      <resourceSearch targetOid="effortTargetOid.grandParentOid.oid" referenceType="Kunde.Kunde" separator="|">
+        <action bcsAttrName="Kunde" referenceAttrName="referenceTargetOid.name" />
+      </resourceSearch>
+    </process>           
+    <process name="csvExport">
+      <!-- Trennzeichen zwischen den Eintraegen -->
+      <entrySeparator>;</entrySeparator>
+      <!-- Eintraege einschliessende Zeichen -->
+      <entryDelimiter>&quot;</entryDelimiter>
+      <!-- Zeilenumbruchszeichen -->
+      <lineSeparator>\n</lineSeparator>
+      <!-- columns to export -->
+      <header include="true"/>
+      <columns>
+		<column name="UserID"/>
+		<column name="Person_Nachname"/>
+        <column name="Person_Vorname"/>
+		<column name="ProjektID"/>
+		<column name="Projekt"/>
+		<column name="Projekttask"/>
+		<column name="Duration"/>
+        <column name="Date"/>
+      </columns>
+    </process>
+  </processes>
+</exportconfig>
