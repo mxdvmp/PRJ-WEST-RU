@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<!-- 
+### ACHTUNG: DIESE KONFIGURATION WIRD ZUM STARTEN VON BCS BENÖTIGT!! ###
+ServerConfig-Datei zum Festlegen des Firmennamens (dieser muss ohne Leerzeichen und Sonderzeichen angegeben werden). 
+Über den WebConfigEditor angepasste Konfigurationsdateien werden 
+mithilfe der Property BCS.Install.CustomerName nach dem Schema WebConfig_<CustomerShortname>_<pagename> benannt. -->
+<BCS-Configuration 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+  xsi:noNamespaceSchemaLocation="http://schema.projektron.de/bcs/bcs-server-config.xsd">
+  <Properties>
+    <!-- Dies ist eine Beispieldatei. Der Wert der Property sollte unbedingt angepasst werden! -->
+    <Property Name="BCS.Install.CustomerName" Value="westru"/>
+  </Properties>
+</BCS-Configuration>

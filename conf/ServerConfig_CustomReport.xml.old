@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+<BCS-Configuration
+ xmlns:xi="http://www.w3.org/2001/XInclude"
+ xsi:noNamespaceSchemaLocation="http://schema.projektron.de/bcs/bcs-server-config.xsd">
+ <Reports>
+ <Report File="customreports/UserBookingReport_modif.rptdesign" />
+ </Reports>
+</BCS-Configuration>

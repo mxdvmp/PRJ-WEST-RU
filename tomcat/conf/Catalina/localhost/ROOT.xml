@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Context File für TOMCAT -->
+<!-- 
+  Kopieren Sie diese Datei nach TOMCAT_HOME/conf/Catalina/localhost,
+  und passen Sie die Attribute path und docBase an.
+
+  docBase - gibt das Verzeichnis an, wo die BCS-Webanwendung liegt
+            normalerweise BCS_HOME/webapp
+  
+  path    - legt fest unter welchem URL-Pfad die BCS-Anwendung erreichbar
+            sein soll. 
+            Soll die Web-Anwendung unter http://bcs-host/ erreichbar sein
+            muss path="" gesetzt werden
+            Soll die Web-Anwendung z.B. unter http://bcs-host/pmtool erreichbar sein
+            muss path="/pmtool" gesetzt werden.
+-->
+<Context 
+  path="" 
+  docBase="c:\programme\bcs/webapp" 
+  privileged="true" cachingAllowed="false">
+  <Environment name="bcs.home" value="c:\programme\bcs" type="java.lang.String" override="false"/>
+  <Manager 
+    className="org.apache.catalina.session.StandardManager" 
+    pathname=""/>
+</Context>

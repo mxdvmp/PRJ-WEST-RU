@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<WebConfig xmlns:tmp="http://www.projektron.com/temporary" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Revision="41" xsi:noNamespaceSchemaLocation="http://schema.projektron.de/bcs/web-config.xsd">
+  <General>
+    <Session MaxInactiveInterval="600"/>
+  </General>
+  <Pages CustomStylesheet="true"/>
+</WebConfig>
