@@ -1,0 +1,1869 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<BcsSchedule>
+  <GlobalParameter>
+
+    <!-- Toggle um interne CronJobs zu nutzen -->
+    <InternalCronJobs Active="true" />
+
+    <!--
+      Zeit in ms. in der ein Job gestartet sein worden muss, nachdem der Trigger gefeuert hat.
+    -->
+    <MisfireThreshold Value="60000" />
+
+    <!-- Anzahl der Threads im Threadpool für Worker -->
+    <ThreadCount Value="3" />
+
+    <!-- Intervallzeit des JobWatchDog in ms. -->
+    <JobWatchInterval Value="300000" />
+
+    <JobParameter>
+
+      <!--
+        Mailadresse desjenigen Mail-Accounts, welcher für den Versand von Mails verwendet werden
+        soll.
+      -->
+      <Param Name="from" Value="i.ishina@west-ru.ru" />
+
+      <!--
+        Mails werden nur versendet, wenn der folgende Parameter auf 'true' gesetzt wird. Diese Option
+        ist nützlich, um den Mail-Versand zu Testzwecken auszuschalten.
+      -->
+      <Param Name="doMail" Value="true" />
+
+      <!--
+        Mails werden nur an Adressen versendet, die einer Überprüfung mit den hier konfigurierten Suchmustern
+        genügen. Dabei wird eine Leerzeichen-separierte Liste von Suchmustern erwartet. Eine E-Mail-Adresse
+        ist dann gültig, wenn sie mit einem Muster ohne '!' beginnt. Suchmuster mit "!" am Anfang werden
+        als absolute Verbote interpretiert und haben immer Vorrang. Falls keine Einschränkung gewünscht
+        ist der Wert leer zu lassen.
+
+        Kann dazu genutzt werden, um das versehentliche Verschicken von Mails an Kundenadressen
+        o.ä. zu vermeiden.
+
+        Bsp.:
+
+        mailAdressVerifyer='@ihre-domain.de !test@ihre-domain.de'
+      -->
+      <Param Name="mailAdressVerifyer" Value="" />
+
+      <!-- Mitarbeiter werden nur unterhalb des hier eingetragenen Knotens gesucht. -->
+      <Param Name="rootOid" Value="2_JUsers" />
+
+      <!--
+        Mails können Links enthalten, die auf ein Objekt im BCS-Server zeigen. Im Standard wird die BCS-URL
+        genommen, welche in BCS_HOME/conf_local/ServerConfig_WebRoot.properties eingetragen ist.
+        Die Standard-URL kann hier überschrieben werden. Für diese Links wird eine URL mit dem folgenden
+        Format benötigt:
+
+        [protokoll]://[host-name]:[port]/[web-applikation-name]/bcs
+
+        Wenn BCS als Rootwebanwendung läuft, wird die URL in folgendem Format benötigt:
+
+        [protokoll]://[host-name]:[port]/bcs
+      -->
+      <!--
+        <Param Name="bcsHost" Value="http://[bcs.meine-domain.de]:8080/bcs" />
+      -->
+
+      <!-- run CronJobs in silent-mode -->
+      <Param Name="silent" Value="false" />
+
+      <!-- Zeit in Minuten nach der der Job automatisch beendet werden soll. -->
+      <Param Name="timeout" Value="15" />
+
+      <!--
+        Legt fest, ob die zeitgesteuerten Systemaktivitäten ausführliche Logausgaben schreiben.
+      -->
+      <Param Name="verbose" Value="false" />
+
+    </JobParameter>
+  </GlobalParameter>
+
+  <Triggers>
+    <!--
+      Laufzeiten der Standard-Nacht-Trigger (23:30 - 06:00)
+      
+      1)  stdAutoOpenCloseTrigger: Beginn 23:30
+      2)  stdCreateMTASnapshots: Beginn 23:40
+      3)  stdCreateEVASnapshots: Beginn 23:50
+
+      4)  stdMilestonesTrigger: Beginn 00:00
+      5)  stdDynUserTrigger: Beginn 00:15
+      6)  stdMaintainManagedContractsTrigger: Beginn 0:30
+      7)  stdManageVacationBudgetsTrigger: Beginn 00:30
+      8)  stdMaintainInfiniteEffortRepetitionsTrigger: Beginn 00:45
+      9)  stdRedistributeRemainingExpenseTrigger: Beginn 01:00
+      10) stdSyncEffortsTrigger: Beginn 01:15
+      11) stdScheduledActionsTrigger: Beginn 04:30
+      12) stdMaintainEffortHistoryTrigger: Beginn 05:00
+      13) stdGenerateScheduledReportsTrigger: Beginn 05:15
+      14) stdMaintainChangeSetsTrigger: Beginn 05:30
+
+      15) stdMaintainVersionHistoryTrigger: Beginn 05:45
+      16) stdMaintainFileContentsTrigger: Beginn 05:45
+      17) stdMaintainLoginHistoryTrigger: Beginn 05:45
+      
+      Laufzeiten regelmäßig laufender Jobs (06:00 - 22:00)
+      
+      1) stdNotifyAboutReferencesTrigger: 15 Minuten-Takt
+      2) stdNotifyAboutTimeRecordingStateChangeTrigger: 15 Minuten-Takt
+      3) stdTicketNotificationTrigger: 15 Minuten-Takt
+      4) stdResubmissionNotificationTrigger: ein Mal pro Tag um 06:00
+      5) stdWatchEditTrigger: 15 Minuten-Takt
+      6) stdWatchStateChangedTrigger: 15 Minuten-Takt
+      7) stdWatchWarnTrigger: ein Mal pro Tag um 06:00
+      8) stdMaintainProcessWorkflowsTrigger: 5 Minuten-Takt
+      
+      Hinweis: Die Zeit zwischen 22:00 und 23:30 kann für das Erstellen von Backups genutzt werden.
+    -->
+     
+    <!--
+      Öffnet Projekte und Aufgaben, wenn diese entsprechend auf dem Status "Geplant" stehen und
+      das Start-Datum - korrigiert um n Tage - erreicht ist.
+      Schließt Projekte und Aufgaben, wenn diese entsprechend auf dem Status "Offen" stehen und 
+      das End-Datum - korrigiert um n Tage - erreicht ist.
+    -->
+    <Trigger Name="stdAutoOpenCloseTrigger" Group="stdNightlyGroup" Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="30" Stepsize="0" />
+        <Hours Value="23" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="AutoOpenClose">
+        <JobParameter>
+
+          <!-- Die Oid desjenigen Knotens, unter dem Projekte und Aufgaben gesucht werden -->
+          <!-- <Param Name="rootOid" Value="3_JProjects" /> -->
+
+          <!-- Status in dem Projekte prinzipiell automatisch geöffnet werden können -->
+          <!-- <Param Name="pspPlannedState" Value="Planned Authorised" /> -->
+
+          <!-- Status in den die Projekte beim Öffnen gesetzt werden. -->
+          <!-- <Param Name="pspOpenedState" Value="Opened" /> -->
+
+          <!-- Status, in dem Projekte prinzipiell automatisch geschlossen werden können -->
+          <!--  <Param Name="pspClosableState" Value="Opened" /> -->
+
+          <!-- Bestimmt, ob das Startdatum automatisch angepasst werden soll -->
+          <!-- <Param Name="updateStartDate" Value="true" /> -->
+
+          <!-- Bestimmt, ob das Enddatum automatisch angepasst werden soll -->
+          <!-- <Param Name="updateEndDate" Value="true" /> -->
+
+          <!--
+            Bestimmt, ob das der Wert der AutoOpen/Close Attribute nach einer durchgeführten Aktion zurückgesetzt
+            werden soll.
+          -->
+          <!-- <Param Name="resetAutoAttributes" Value="true" /> -->
+                
+          <!-- Bestimmt, ob beim Schließen untergeordnete Elemente mitgeschlossen werden. -->
+          <!-- <Param Name="closeRecursive" Value="false" /> -->
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <Trigger Name="stdCreateMTASnapshots" Group="stdNightlyGroup" Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="40" Stepsize="0" />
+        <Hours Value="23" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="CreateSnapshots">
+        <JobParameter>
+
+          <!-- Legt fest, für welchen Snapshot-Subtypen der Snapshot erzeugt werden soll. -->
+          <Param Name="SnapshotSubtype" Value="milestoneTrendAnalysis" />
+
+          <!--
+            Legt fest, auf welcher Zeitbasis die Werte erzeugt werden sollen. Damit kann erzwungen
+            werden, dass es nur einen Snapshot je Zeiteinheit geben darf, bestehende Snapshots für diesen
+            Zeitraum werden dann aktualisiert. Mögliche Werte sind:
+
+            - 'none',
+            - 'daily',
+            - 'weekly' und
+            - 'monthly'.
+          -->
+          <Param Name="SnapshotTimeBase" Value="daily" />
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!-- Speichert für ausgewählte Projekte die Kennzahlen für die Earned Value Analyse zum heutigen Datum. -->
+    <Trigger Name="stdCreateEVASnapshots" Group="stdWeeklyGroup" Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="50" Stepsize="0" />
+        <Hours Value="23" Stepsize="0" />
+        <DayOfMonth Value="?" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="FRI" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="CreateSnapshots">
+        <JobParameter>
+
+          <!-- Legt den Snapshot-Subtypen fest. -->
+          <Param Name="SnapshotSubtype" Value="earnedValueAnalysis" />
+
+          <!--
+            Legt fest, auf welcher Zeitbasis die Werte erzeugt werden sollen. Damit kann erzwungen
+            werden, dass es nur einen Snapshot je Zeiteinheit geben darf, bestehende Snapshots für diesen
+            Zeitraum werden dann aktualisiert. Mögliche Werte sind:
+
+            - 'none',
+            - 'daily',
+            - 'weekly' und
+            - 'monthly'.
+          -->
+          <Param Name="SnapshotTimeBase" Value="weekly" />
+
+          <!-- 
+            Legt über einen Loader die Objekte fest, für die Werte erzeugt werden sollen.
+            Wenn kein Loader angegeben ist, dann werden Snapshots für alle offenen Projekte erzeugt. 
+          -->
+          <!-- Beispiel: alle offenen Projekte, die über ein Zusatzattribut namens "customAttribute_IsExternal" 
+               als "extern" markiert sind. -->
+          <!-- 
+          <Param Name="SnapshotObjectLoader">
+            <Loader>
+              <Search Key="typ" Operator="=" Value="JProject" />
+              <Search Key="subtyp" Operator="=" Value="project" />
+              <Search Key="state" Operator="=" Value="Opened" />
+              <Search Key="customAttribute_IsExternal" Operators="=" Value="true" />
+            </Loader>
+          </Param>
+           -->
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      This module searches for milestones which are "Opened" then looks for tasks and projects the milestone
+      is waiting for ("End-Constraints") if there are such tasks and projects, the module checks if they
+      are closed if so, the state of the module is changed to "Closed" and all tasks and projects that
+      are currently "Planned" are switched to "Opened".
+    -->
+    <Trigger Name="stdMilestonesTrigger" Group="stdNightlyGroup" Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="0" Stepsize="0" />
+        <Hours Value="0" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="Milestones" />
+    </Trigger>
+
+    <!--
+      Personendaten in BCS kennen Attribute, die mit Zeitbezug ausgestattet sind. Für jeden Zeitraum
+      gibt es einen Datensatz nebst aller Werte, die für eben diesen Zeitraum gelten sollen. Redundant
+      wird der AKTUELLE Wert eines Attributs bei der Person gespeichert. Der hier vorliegende CronJob
+      pflegt diese Redundanz, indem er - falls nötig - die Attribute bei der Person aktualisiert.
+    -->
+    <Trigger Name="stdDynUserTrigger" Group="stdNightlyGroup" Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="15" Stepsize="0" />
+        <Hours Value="0" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="DynUser" />
+    </Trigger>
+
+			<!-- Monitore werden verwendet, um das Laufzeitverhalten von Projektron BCS zu
+			messen. Monitore werden im Speicher gehalten und können über die Benutzer-
+			Oberfläche persistiert werden. Mit dem vorliegenden CronJob ist es möglich, 
+			die Persistierung automatisch auszuführen. 
+			
+			Dieser CronJob sollte im Standard ausgeschaltet sein, weil er Systemlast erzeugt.
+			 -->
+    <Trigger Name="stdPersistMonitorsTrigger" 
+    	Group="stdCronTriggerGroup" 
+    	Prio="1"
+      	Enabled="false">
+      <Schedule>
+        <Minutes Value="*" Stepsize="60" />
+        <Hours Value="6-21" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="PersistMonitors" />
+    </Trigger>
+
+
+            <!-- Aktualisiert die Status der Verträge bzgl. automatischer Verlängerung, Auslaufen, etc.
+                 Versendet Benachrichtigungsmails bzgl. auslaufender oder kündbarer Verträge.
+        
+                 Aktualisiert werden außerdem Datensätze für die Auswertung der Vertragskosten.
+                 Diese werden für eine festgelegte Zeitspanne in die Zukunft gepflegt. Diese Zeitspanne ist konfigurierbar:
+                 Die Vorschau geht bis Ende diesen Jahres plus "ManagedContractService.Costs.PreviewOffset" viele Monate.
+                 Per Default ist dieser Offset 12, so dass eine Vorschau bis zum Ende des kommenden Jahres möglich ist.
+                 Der CronJob wird die Vertragskostensätze nach Beginn eines neuen Jahres oder nach Änderung dieser Property aktualisieren.
+                 Ferner ist eine Aktualisierung für sich automatisch verlängernde Verträge notwendig. -->
+    <Trigger Name="stdMaintainManagedContractsTrigger" Group="stdNightlyGroup" Prio="1"
+      Enabled="true">
+      <Schedule>
+        <Minutes Value="30" Stepsize="0" />
+        <Hours Value="0" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="MaintainManagedContracts">
+        <JobParameter>
+
+          <!-- Vorlauf für Benachrichtigungsmails in Tagen -->
+          <Param Name="notificationOffsetDays" Value="30" />
+
+          <!--
+            Minimaler Abstand zwischen Benachrichtigungen zu einem Vertrag in Tagen. Sollte kleiner als
+            der Vorlauf für Benachrichtigungsmails sein, damit dieser eingehalten werden kann.
+          -->
+          <Param Name="minimumDaysBetweenNotifications" Value="25" />
+
+          <!-- Ob Sammelmails (mit allen Verträgen je Empfänger) oder Einzelmails (je Vertrag je Empfänger) werden -->
+          <Param Name="sendAccumulatedMailNotifications" Value="true" />
+          
+          <!-- Legt fest, ob Erinnerungs-Mails versendet werden, wenn N Tage vor
+               dem Kündigungs-Termin kein Feedback zu Kündigung eingetragen wurde. -->
+          <Param Name="sendFeedBackReminderMails" Value="false" />
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!-- Aktualisiert  die Vertriebsampeln von externen Organisationen -->
+    <Trigger Name="stdMaintainContactRemindersTrigger" Group="stdNightlyGroup" Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="40" Stepsize="0" />
+        <Hours Value="0" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="MaintainContactReminders">
+        <JobParameter />
+      </Jobref>
+    </Trigger>
+
+    <Trigger Name="stdManageVacationBudgetsTrigger" Group="stdNightlyGroup" Prio="1"
+      Enabled="true">
+      <Schedule>
+        <Minutes Value="30" Stepsize="0" />
+        <Hours Value="0" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="ManageVacationBudgets" />
+    </Trigger>
+
+    <!--
+      CronJob zum Erzeugen/Entfernen von gespeicherten Artikel-Wiederholungen für unendliche wiederholte
+      Artikel.
+
+      Ausführung ist prinzipiell nur 1x am ersten Tag des Jahres notwendig, bei weiteren Aufrufen wird
+      keine Aktion ausgeführt. Nach Änderung der der Zeitspanne, bis zu der unendlich wiederholte Artikel
+      gespeichert werden sollen, aktuelles Jahr plus X Monate
+      (siehe "EffortService.Repetitions.InfiniteRepetitionRecordOffset"), muss dieser CronJob ausgeführt
+      werden, um die gespeicherten wiederholten Artikel anzupassen.
+    -->
+    <Trigger Name="stdMaintainInfiniteEffortRepetitionsTrigger" Group="stdNightlyGroup"
+      Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="45" Stepsize="0" />
+        <Hours Value="0" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="MaintainInfiniteEffortRepetitions">
+        <JobParameter>
+
+          <!-- Erwingt Ausführung, auch wenn keine Ausführung notwendig ist (gedacht zur Problembehebung) -->
+          <Param Name="force" Value="false" />
+          <!-- Maximale Anzahl Fehler beim Speichern, ab der der CronJob abgebrochen werden soll -->
+          <Param Name="maxerrors" Value="1000" />
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+    
+    <!--
+      - Verteilt proportional Restaufwände von ausgelaufenen Zeitscheiben auf die aktuelle und zukünftige Zeitscheiben um.
+      - aktualisiert den linearen Restaufwand an Plänen von Aufgaben wo die "lineare Resaufwandanpassung" eingeschaltet ist.
+    -->
+    <Trigger Name="stdRedistributeRemainingExpenseTrigger" Group="stdNightlyGroup" Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="0" Stepsize="0" />
+        <Hours Value="1" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="RedistributeRemainingExpense">
+        <JobParameter />
+      </Jobref>
+    </Trigger>
+
+    <Trigger Name="stdSyncEffortsTrigger" Group="stdNightlyGroup" Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="20" Stepsize="0" />
+        <Hours Value="13" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="SyncEfforts">
+        <JobParameter>
+
+          <!--
+            Anzahl der Monate, für die Zeitbuchungen von Personen rückwirkend aktualisiert werden sollen.
+            Im Standard wird keine Einschränkung verwendet.
+          -->
+          <!-- <Param Name="MonthOffset" Value="3" /> -->
+
+		  <!-- Gibt diejenigen Subtypen von Buchungen an, für die der Zeitfilter angewendet   
+			werden soll. Im Standard wird "Personal" verwendet. Mehrere Subtypen werden durch Leerzeichen
+			getrennt. -->
+		  <!--  <Param Name="DateFilterSubtypes" Value="Personal" /> -->
+
+
+
+          <!--
+            Leerzeichen-separierte Liste von Projekt/Aufgabenstatus, für die Planwerte nicht aktualisiert
+            werden sollen. Im Standard: Closed.
+          -->
+          <!-- <Param Name="IgnoredStates" Value="Closed" /> -->
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      CronJob zum Ausführen von konfigurierten ActionRules.
+
+      Es können explizit Gruppen von ActionRules und Namen von ActionRules zur Ausführen als JobParameter
+      konfiguriert werden. Wenn keine Gruppen oder Aktionen als Parameter gegeben sind, werden alle Aktionen
+      der Gruppe "nightly" ausgeführt.
+    -->
+    <Trigger Name="stdScheduledActionsTrigger" Group="stdNightlyGroup" Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="30" Stepsize="0" />
+        <Hours Value="4" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="ScheduledActions">
+        <JobParameter>
+
+          <!--
+            Namen der Gruppen auszuführender Aktionen. Wenn keine Gruppen oder Aktionen als Parameter
+            gegeben sind, werden alle Aktionen der Gruppe "nightly" ausgeführt.
+          -->
+          <!-- <Param Name="ScheduledActionGroups" Value="" /> -->
+
+          <!-- Namen der auszuführenden Aktionen -->
+          <!-- <Param Name="ScheduledActions" Value="" /> -->
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      Pflegt Historieneinträge für die Auswertung Projekt => Auswertung => Historie.
+
+      Jeder Aufruf fügt der Historie weitere Einträge mit dem Stand zum Zeitpunkt der Ausführung hinzu.
+      Der CronJob sollte höchstens ein Mal pro Tag laufen. Wir empfehlen, ihn in der Nacht laufen zu
+      lassen. Der CronJob kann täglich oder auch seltener laufen, z.B. wöchentlich. Letzteres schont
+      die Systemressourcen, weil weniger Daten generiert werden. Letzlich hängt die Granularität der
+      Historie aber von den Anforderungen des Nutzers ab.
+    -->
+    <Trigger Name="stdMaintainEffortHistoryTrigger" Group="stdNightlyGroup" Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="0" Stepsize="0" />
+        <Hours Value="5" Stepsize="0" />
+        <DayOfMonth Value="?" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="FRI" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="CreateSnapshots">
+        <JobParameter>
+
+          <!-- Legt fest, für welchen Snapshot-Subtypen der Snapshot erzeugt werden soll. -->
+          <Param Name="SnapshotSubtype" Value="effortIndicators" />
+
+          <!--
+            Legt fest, auf welcher Zeitbasis die Werte erzeugt werden sollen. Damit kann erzwungen
+            werden, dass es nur einen Snapshot je Zeiteinheit geben darf, bestehende Snapshots für diesen
+            Zeitraum werden dann aktualisiert. Mögliche Werte sind:
+
+            - 'none',
+            - 'daily',
+            - 'weekly' und
+            - 'monthly'.
+          -->
+          <Param Name="SnapshotTimeBase" Value="daily" />
+          
+          <!-- 
+            Legt über einen Loader die Objekte fest, für die Werte erzeugt werden sollen.
+            Wenn kein Loader angegeben ist, dann werden Snapshots für alle offenen Projekte erzeugt. 
+          -->
+          <!-- Beispiel: alle offenen Projekte, die über ein Zusatzattribut namens "customAttribute_IsExternal" 
+               als "extern" markiert sind. -->
+          <!-- 
+          <Param Name="SnapshotObjectLoader">
+            <Loader>
+              <Search Key="typ" Operator="=" Value="JProject" />
+              <Search Key="subtyp" Operator="=" Value="project" />
+              <Search Key="state" Operator="=" Value="Opened" />
+              <Search Key="customAttribute_IsExternal" Operators="=" Value="true" />
+            </Loader>
+          </Param>
+           -->
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      Erstellt automatisch Berichte mit den im BCS erstellten Berichtsaufträgen.
+    -->
+    <Trigger Name="stdGenerateScheduledReportsTrigger" Group="stdNightlyGroup" Prio="1"
+      Enabled="true">
+      <Schedule>
+        <Minutes Value="15" Stepsize="0" />
+        <Hours Value="5" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="GenerateScheduledReports" />
+    </Trigger>
+
+    <!--
+      Räumt nach der Überschreitung der Aufbewahrungszeit die ChangeSets ab (z.B. die Referenzen auf "gelöschte Dateien"). 
+      Die Angabe, wie lange ChangeSets vorgehalten werden, kann vom Projektron-Support angepasst werden.
+    -->
+    <Trigger Name="stdMaintainChangeSetsTrigger" Group="stdNightlyGroup" Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="30" Stepsize="0" />
+        <Hours Value="5" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="MaintainChangeSets">
+        <JobParameter>
+          <!-- Legt fest, wie viele Objekte auf einen Schlag gelöscht werden sollen. -->
+          <Param Name="BlockSize" Value="500" />
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!-- Löscht Alt-Einträge aus der Versions-History. -->
+    <Trigger Name="stdMaintainVersionHistoryTrigger" Group="stdNightlyGroup" Prio="1"
+      Enabled="true">
+      <Schedule>
+        <Minutes Value="45" Stepsize="0" />
+        <Hours Value="5" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="MaintainVersionHistory">
+        <JobParameter>
+          <!--
+            Setzt das minimale Alter in Tagen, ab dem Einträge gelöscht werden. Wird für diejenigen Einträge
+            verwendet, für die "maxDaysDetails" nichts definiert.
+          -->
+          <Param Name="maxDays" Value="31" />
+
+          <!--
+            Setzt das minimale Alter in Tagen, ab dem Einträge gelöscht werden.
+            Syntax:
+            <operation>[.<typ>][ <operation>[.<typ>] ...]
+            <operation>:= Insert|Edit|Delete
+            <typ>:=JOU|JUser|JProject|JTask|JAppointment|JAnnotation|JEffort|JRole|JReference
+          -->
+          <!--
+            <Param Name="maxDaysDetails"
+            Value="Insert.JOU=120 Edit.JOU=120 Delete.JOU=120
+            Insert.JUser=120 Edit.JUser=120 Delete.JUser=120
+            Insert.JProject=8 Edit.JProject=120 Delete.JProject=120
+            Insert.JTask=8 Edit.JTask=120 Delete.JTask=120
+            Insert.JAppointment=30 Edit.JAppointment=30 Delete.JAppointment=30
+            Insert.JAppointmentSeries=30 Edit.JAppointmentSeries=30 Delete.JAppointmentSeries=30
+            Insert.JAppointmentRef=30 Edit.JAppointmentRef=30 Delete.JAppointmentRef=30
+            Insert.JAnnotation=8 Edit.JAnnotation=8 Delete.JAnnotation=8
+            Insert.JEffort=8 Edit.JEffort=8 Delete.JEffort=8
+            Insert.JRole=120 Edit.JRole=120 Delete.JRole=120
+            Insert.JReference=8 Edit.Reference=8 Delete.Reference=8
+            Insert.JExchangeRate=1825 Edit.JExchangeRate=1825 Delete.JExchangeRate=1825" />
+          -->
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      Entfernt verwaiste FileContent-Einträge und die zugehörigen Dateien. Diese entstehen, wenn
+      eine gelöschte Datei auch aus den Papierkorb gelöscht wird.
+    -->
+    <Trigger Name="stdMaintainFileContentsTrigger" Group="stdNightlyGroup" Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="45" Stepsize="0" />
+        <Hours Value="5" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="MaintainFileContents">
+        <JobParameter />
+      </Jobref>
+    </Trigger>
+
+    <!-- Löscht Alt-Einträge aus der Login-History. -->
+    <Trigger Name="stdMaintainLoginHistoryTrigger" Group="stdNightlyGroup" Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="45" Stepsize="0" />
+        <Hours Value="5" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="MaintainLoginHistory">
+        <JobParameter>
+          <!-- Setzt das minimale Alter in Tagen, ab dem Einträge gelöscht werden -->
+          <!-- <Param Name="maxDays" Value="20" /> -->
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+    
+    <!--
+      Generiert E-Mails an Mitarbeiter, wenn diese Aufgabe oder einem Projekt neu zugeordnet werden.
+
+      Mails werden nur an solche Mitarbeiter verschickt, die in ihrem Profile das Feld "Automatische
+      Benachrichtigung bei Neuzuordnung einer Aufgabe" ('profileMailNewReferences') aktiviert haben.
+      Außerdem wird - wie üblich - eine Mailadresse benötigt.
+    -->
+    <Trigger Name="stdNotifyAboutReferencesTrigger" Group="stdCronTriggerGroup" Prio="1"
+      Enabled="true">
+      <Schedule>
+        <Minutes Value="*" Stepsize="15" />
+        <Hours Value="6-21" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="NotifyAboutReferences">
+        <JobParameter>
+          <!-- Zuordnungen, die älter als "minAge" Minuten sind, werden gemeldet. -->
+          <Param Name="minAge" Value="60" />
+
+          <!-- Zuordnungen, die älter als "maxAge" Minuten sind, werden NICHT gemeldet. -->
+          <Param Name="maxAge" Value="1500" />
+
+          <!--
+            Liste der Zuordnungstypen, für die prinzipiell eine E-Mail verschickt werden kann. Der entsprechende
+            Benutzer muss jedoch immer noch die entsprechende Option bei seinen Einstellungen aktiviert
+            haben.
+          -->
+          <!-- <Param Name="validReferenceTypes" Value="Team.Producer Team.Projektleiter" /> -->
+
+          <!-- Welche für den Mitarbeiter zuständige Personen sollen zusätzlich informiert werden? -->
+          <!-- <Param Name="additionalUserRefsToNotify" Value="ADLeiter" /> -->
+
+          <!-- Sollen zusätzliche Systemnachrichten erzeugt werden? -->
+          <Param Name="createSystemMessages" Value="false" />
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      Generiert eine E-Mail an den Mitarbeiter, wenn eine Aufgabe neu in der Aufgabenliste erscheint.
+
+      Benachrichtigt werden Personen, die in ihrem Profile das Feld "Mail bei neuen Einträgen in der
+      Aufgabenliste" ('profileMailNewTimeRecording') aktiviert haben. Außerdem wird - wie üblich
+      - eine Mailadresse benötigt.
+    -->
+    <Trigger Name="stdNotifyAboutTimeRecordingStateChangeTrigger" Group="stdCronTriggerGroup"
+      Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="*" Stepsize="15" />
+        <Hours Value="6-21" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="NotifyAboutTimeRecordingStateChange">
+        <JobParameter>
+
+          <!-- Zuordnungen, die älter als "minAge" Minuten sind, werden gemeldet. -->
+          <Param Name="minAge" Value="60" />
+
+          <!-- Zuordnungen, die älter als "maxAge" Minuten sind, werden NICHT gemeldet. -->
+          <Param Name="maxAge" Value="1440" />
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      Erweiterte Ticketbenachrichtigungen.
+
+      Versendet eine E-Mail je geändertem Ticket unter der Verwendung der über die Oberfläche änderbaren Einstellungen.
+      
+      Ausnahme des 'mailAdressVerifyer':
+      Für per Ticket-Mail-Import importierte Tickets, zu deren E-Mail-Adresse keine Person im BCS existiert,
+      wird auch dann eine Ticketbenachrichtigung an diese E-Mail-Adresse verschickt, wenn sie nicht dem
+      Muster 'mailAdressVerifyer' entspricht (siehe oben, unter GlobalParameter),
+      da dies in diesem Fall der einzige Weg ist, den Veranlasser des Tickets über Änderungen und Rückfragen
+      am Ticket zu benachrichtigen.
+    -->
+    <Trigger Name="stdTicketNotificationTrigger" Group="stdCronTriggerGroup" Prio="1"
+      Enabled="true">
+      <Schedule>
+        <Minutes Value="*" Stepsize="15" />
+        <Hours Value="6-21" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="TicketNotification">
+        <JobParameter>
+
+          <!-- Optional können die in der Email anzuzeigenden Attribute eingeschränken -->
+          <Param Name="attributesToDisplay"
+            Value="name subtyp state changeCustomerPriority changeCustomerState changeCompletionDate description changeReply attachmentOwner relationTicketProducers attachmentLastCommentName attachmentLastCommentDescription ticketEscalationState ticketEscalationDate" />
+
+          <!--
+            Optional können Attribute konfiguriert werden, bei denen die alten Werte nicht in die Mail
+            geschrieben werden.
+          -->
+          <Param Name="suppressOldValuesAttributes" Value="attachmentLastCommentName attachmentLastCommentDescription" />
+
+          <!--
+            Für in Projektron BCS angelegte Personen kann geprüft werden, ob Sie sich anmelden können
+            und nur dann eine E-Mail erhalten. Dies ist das Standardverhalten. Es kann komplett deaktiviert
+            werden, wenn Value='false' gesetzt wird. Alternativ kann man Positiv- und Negativlisten von
+            JUser-Subtypen angeben. Bsp.:
+
+            Value="true=subtype1,subtype2,subtype3 false=subtype4,subtype5".
+
+            Dabei gilt: Alle Subtypen, die dann nicht explizit erwähnt werden, werden geprüft (also als
+            ob sie bei true=... gelistet wären)!
+          -->
+          <Param Name="checkUserLoginAllowed" Value="true" />
+          <Param Name="checkUserStartAndEndDate" Value="true" />
+
+
+          <!-- 
+            Für interne Nutzer kann eingestellt werden, dass diese KEINE Mails über EIGENE Änderungen
+            am Ticket und/oder EIGENE Kommentare bekommen. Diese Einstellungen kann der Anwender in seinem 
+            Benutzerprofil überschreiben. 
+           -->
+          <Param Name="suppressMailForOwnChanges"  Value="false" />
+          <Param Name="suppressMailForOwnComments"  Value="false" />
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      Prüft, ob Wiedervorlagen fällig sind und schickt diesbezüglich Mails an die Besitzer der Wiedervorlagen.
+      Dieser Job sollte ein Mal täglich laufen, möglichst morgens.
+    -->
+    <Trigger Name="stdResubmissionNotificationTrigger" Group="stdCronTriggerGroup" Prio="1"
+      Enabled="true">
+      <Schedule>
+        <Minutes Value="0" Stepsize="0" />
+        <Hours Value="6" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="ResubmissionNotification" />
+    </Trigger>
+
+    <!--
+      Benutzer können sich bei Objekten registrieren, um per Mail darüber benachrichtigt zu werden, dass
+      an dem Objekt Änderungen vorgenommen worden sind. Rekursiv können auch darunterliegende Objekte
+      erfasst werden. Es wird über verknüpfte Objekte benachrichtigt, wie z.B. Teamzuordnungen oder Risiken.
+      Mit den untenstehenden Parametern haben Sie die Möglichkeit, die Benachrichtigung zu beeinflussen,
+      z.B. wenn Sie nicht über alle Änderungen informiert werden möchten.
+    -->
+    <Trigger Name="stdWatchEditTrigger" Group="stdCronTriggerGroup" Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="*" Stepsize="15" />
+        <Hours Value="6-21" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="WatchEdit">
+        <JobParameter>
+
+          <!-- Optional können die in der Email anzuzeigenden Attribute eingeschränken. -->
+          <!--
+            <Param Name="attributesToDisplay" Value="name description state priority" />
+          -->
+
+          <!--
+            Optional können spezielle Objekttypen komplett ausgenommen werden. Notation: Leerzeichen-separierte
+            Liste von <typ>[.<subtyp>]. Wenn dieser Parameter nicht angegeben wird oder leer ist, dann
+            wird der Objekttyp JEffort ignoriert. Um keinen Objekttyp zu ignorieren, muss hier Value="NONE"
+            angegeben werden.
+          -->
+          <!-- <Param Name="ignoreObjectTypes" Value="JEffort" /> -->
+
+          <!-- Automatische Überwachung externer Meilensteine -->
+          <!-- <Param Name="watchExternalMilestones" Value="true" /> -->
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      Benutzer können sich bei Objekten registrieren, um per Mail darüber benachrichtigt zu werden, dass
+      sich der Status des Objektes geändert hat. Mit den untenstehenden Parametern haben Sie die Möglichkeit,
+      die Benachrichtigung zu beeinflussen, z.B. wenn Sie nicht über alle Änderungen informiert werden
+      möchten.
+    -->
+    <Trigger Name="stdWatchStateChangedTrigger" Group="stdCronTriggerGroup" Prio="1"
+      Enabled="true">
+      <Schedule>
+        <Minutes Value="*" Stepsize="15" />
+        <Hours Value="6-21" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="WatchStateChanged">
+        <JobParameter>
+
+          <!-- Optional können die in der Email anzuzeigenden Attribute eingeschränken -->
+          <!--
+            <Param Name="attributesToDisplay" Value="name description state priority" />
+          -->
+
+          <!--
+            Optional können die für das Versenden der Email relevanten Attribute konfiguriert werden:
+          -->
+          <!--
+            <Param Name="relevantAttributes" Value="state changeCustomerState" />
+          -->
+
+          <!--
+            Optional können Attribute konfiguriert werden, bei denen die alten Werte nicht in die Mail
+            geschrieben werden:
+          -->
+          <!-- <Param Name="suppressOldValuesAttributes" Value="" /> -->
+
+          <!--
+            Es werden nur Objekttypen interpretiert, die hier aufgeführt sind. Ein leerer Eintrag wird
+            ignoriert. Notation: <typ>[.<subtyp>]
+          -->
+          <!-- <Param Name="requiredObjectTypes" Value="" /> -->
+
+          <!--
+            Optional können spezielle Objekttypen komplett ausgenommen werden. Notation: Leerzeichen-separierte
+            Liste von <typ>[.<subtyp>] Wenn dieser Parameter nicht angegeben wird oder leer ist, dann
+            wird der Objekttyp JEffort ignoriert. Um keinen Objekttyp zu ignorieren, muss hier Value="NONE"
+            angegeben werden.
+          -->
+          <!-- <Param Name="ignoreObjectTypes" Value="JEffort" /> -->
+
+          <!-- Automatische Überwachung externer Meilensteine -->
+          <!-- <Param Name="watchExternalMilestones" Value="true" /> -->
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      User können sich bei Objekten registrieren, um per Mail Warnungen zu erhalten, wenn eine der unten
+      angegebenen Bedingungen erfüllt ist.
+    -->
+    <Trigger Name="stdWatchWarnTrigger" Group="stdCronTriggerGroup" Prio="1" Enabled="true">
+      <Schedule>
+        <Minutes Value="0" Stepsize="0" />
+        <Hours Value="6" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="WatchWarn">
+        <JobParameter>
+
+          <!--
+            Die Zeit-Reserve in Prozent, die einem Projekt oder einer Aufgabe bis zum Enddatum bleibt.
+            Erlaubt sind ganze Zahlen >= 0
+          -->
+          <Param Name="minDateDiff" Value="0" />
+
+          <!--
+            Die maximale Differenz in Prozent zwischen erwartetem Gesamtaufwand und Planaufwand.
+            Erlaubt sind ganze Zahlen >= 0
+          -->
+          <Param Name="maxExpenseDiff" Value="0" />
+
+          <!--
+            Die maximale Differenz in Prozent zwischen erwarteten Gesamtkosten und Plan-Gesamtkosten. Erlaubt
+            sind ganze Zahlen >= 0
+          -->
+          <Param Name="maxCostDiff" Value="0" />
+
+          <!--
+            Auf einer Aufgabe wurde mindestens "WatchWarn.MaxInactivity" Tage nicht gebucht oder
+            Auftragswerte/Sachkosten/Artikel etc. erfasst. Letztere können auch auf Projektebene hinterlegt
+            worden sind. Erlaubt sind ganze Zahlen > 0
+          -->
+          <Param Name="maxInactivity" Value="7" />
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      Öffnet ProzessWorkflow-Schritte, wenn ihr Zieldatum erreicht ist.
+    -->
+    <Trigger Name="stdMaintainProcessWorkflowsTrigger" Group="stdCronTriggerGroup" Prio="1"
+      Enabled="true">
+      <Schedule>
+        <Minutes Value="*" Stepsize="5" />
+        <Hours Value="6-21" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="MaintainProcessWorkflows">
+        <JobParameter />
+      </Jobref>
+    </Trigger>
+
+    <!--
+      Triggerbeispiele für die verschiedenen Jobs.
+
+      Die Scheduleblöcke sind NICHT konfiguriert und müssen noch mit sinnvollen Werten gefüllt werden!
+      Beachten Sie dazu die Beispiele in der Administratordokumentation.
+    -->
+
+    <!--
+      Kümmert sich um zwei Dinge in Zusammenhang mit Mails:
+      1. Versucht importierte E-Mails von unbekannten Absendern den ggf. nachträglich in BCS angelegten
+      Personen zuzuordnen.
+      - Optional können E-Mails unbekannter Absender nach einem definierten Zeitraum
+      gelöscht werden.
+      2. Leert bei "IMAP mit Ordnern" die Zielordner bei Erfolg/Fehler auf dem Mail-Server. Optional ist eine
+        Aufbewahrungsfrist einstellbar.
+        Beispiel: Cronjob ist eingestellt auf 14 Tage Aufbewahrungsfrist.
+        Cronjob-Ausführung heute: 17.09.2013 05:30.
+        Es werden alle Mails vor 03.09.2013 00:00 gelöscht.
+        Die Löschung älterer Mails erfolgt endgültig (per expunge).
+    -->
+    <Trigger Name="stdMailMaintenanceTrigger" Group="stdNightlyGroup" Prio="1" Enabled="false">
+      <Schedule>
+        <Minutes Value="35" Stepsize="0" />
+        <Hours Value="5" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+        <Jobref Jobname="MailMaintenance">
+          <JobParameter>
+            <!-- Zu 1.) Mails mit unbekannten Absender können nach einen bestimmten Dauer gelöscht werden,
+                        Angabe in Tagen, default=-1, d.h, keine Löschen -->
+            <!-- Param Name="maxAgeOfSuspiciousMails" Value="-1" /-->
+            <!-- Zu 1.) Die Anzahl Mails mit unbekanntem Absender, welche in einem Lauf gelöscht werden, lässt sich beschränken,
+                        default=-1, d.h, alle Löschen -->
+                 <!-- <Param Name="maxMailsPerRun" Value="-1" /> -->
+            <!-- Zu 2.) Soll bei "IMAP mit Ordnern" der "Zielordner bei Erfolg" geleert werden? Werte: true/false, default: true -->
+                 <Param Name="clearSuccessFolder" Value="true" />
+            <!-- Zu 2.) Aufbewahrungsfrist der Mails im IMAP-Ordner "Zielordner bei Erfolg",
+                   Wert in Tagen, default: 14 Tage (Voraussetzung clearSuccessFolder=true)  -->
+                  <Param Name="periodKeepingSuccessMails" Value="14" />
+            <!-- Zu 2.) Soll bei "IMAP mit Ordnern" der "Zielordner bei Fehler" geleert werden? Werte: true/false, default: true -->
+                <Param Name="clearErrorFolder" Value="true" />
+            <!-- Zu 2.) Aufbewahrungsfrist, der Mails im IMAP-Ordner "Zielordner bei Erfolg",
+                 Wert in Tagen, default: 14 Tage (Voraussetzung clearErrorFolder=true)  -->
+                <Param Name="periodKeepingErrorMails" Value="14" />
+          </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      Sendet Erinnerungsmails für aktuelle Termine. Diese Mail beinhaltet ausserdem eine Zusammenfassung
+      neuer und geänderter Termine.
+    -->
+    <Trigger Name="CalendarNotificationTrigger" Group="stdCronTriggerGroup" Prio="1"
+      Enabled="false">
+      <Schedule>
+        <Minutes Value="5" Stepsize="0" />
+        <Hours Value="3" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="CalendarNotification">
+        <JobParameter>
+
+          <!--
+            Die Mail erinnert an heute startende Termine, wenn dieser Parameter angegeben ist.
+          -->
+          <Param Name="notifyAboutTodaysEvents" Value="true" />
+
+          <!--
+            Die Mail enthält eine Zusammenfassung über neue Termine, wenn dieser Parameter angegeben
+            ist.
+          -->
+          <Param Name="notifyAboutInsertedEvents" Value="true" />
+
+          <!--
+            Die Mail enthält eine Zusammenfassung über Termin-Änderungen, wenn dieser Parameter angegeben
+            ist.
+          -->
+          <Param Name="notifyAboutUpdatedEvents" Value="true" />
+
+          <!--
+            Dieses Flag wird in Verbindung mit "notifyAboutUpdatedEvents" und "notifyAboutInsertedEvents"
+            verwendet. Es unterdrückt Benachrichtigungen, die man selbst eingefügt oder geändert hat.
+          -->
+          <Param Name="notifyForeignEventsOnly" Value="true" />
+
+          <!--
+            Liste mit Termin-Subtypen, ggf. erweitert um Terminarten, bei denen eine E-Mail-Benachrichtigung
+            versandt wird, sofern beim Termin das Attribut "Benachrichtigungsmail" auf "Je nach Terminart"
+            gesetzt ist.
+
+            Notation: Leerzeichen-separierte Liste der Termin-Subtypen. Bei der Einschränkung auf spezielle
+            Terminarten eines Subtyps muss dies in der Form [Subtyp].[Terminart] notiert werden, z.B.:
+            event.Meeting
+          -->
+          <Param Name="notifyAboutEventSubtypes" Value="event MilestoneEvent" />
+
+          <!--
+            Liste der Einladungstypen, die über Termine und Änderungen daran informiert werden.
+          -->
+          <Param Name="notifyEventRefTypes" Value="Master Guest" />
+
+          <!--
+            Liste der Einladungstypen, die über Ablehnungen/Zustimmungen zu Terminen informiert werden.
+          -->
+          <Param Name="notifyAboutInvitationChanges" Value="Master" />
+
+          <!--
+            Liste mit Termin-Status, bei denen keine E-Mail-Benachrichtigung versandt wird (z.B. bei
+            abgesagten Terminen).
+          -->
+          <Param Name="preventNotifyAboutCancelledStates" Value="Canceled Done" />
+
+          <!--
+            Liste mit Termin-Einladungsstatus, bei denen keine E-Mail-Benachrichtigung versandt wird
+            (z.B. bei abgelehnten Terminen).
+          -->
+          <Param Name="preventNotifyAboutRejectedInvitationStates" Value="Rejected" />
+
+          <!--
+            Für in Projektron BCS angelegte Personen kann geprüft werden, ob Sie sich anmelden können
+            und nur dann eine E-Mail erhalten. Dies ist das Standardverhalten. Es kann komplett deaktiviert
+            werden, wenn Value="false" gesetzt wird. Alternativ kann man Positiv- und Negativlisten von
+            JUser-Subtypen angeben:
+
+            Value="true=subtype1,subtype2,subtype3 false=subtype4,subtype5"
+
+            Dabei gilt: Alle Subtypen, die dann nicht explizit erwähnt werden, werden geprüft (also als
+            ob sie bei true=... gelistet wären)!
+          -->
+          <Param Name="checkUserLoginAllowed" Value="true" />
+          <Param Name="checkUserStartAndEndDate" Value="true" />
+
+          <!--
+            Benennt Attribute an Terminen, deren Werte geändert werden können sollen, ohne dass eine
+            Benachrichtigung an die Teilnehmer abgeschickt wird. Die Namen der Attribute sind durch ein
+            Leerzeichen voneinander zu trennen.
+          -->
+          <Param Name="ignoreChangesOfAttributes" Value="" />
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      Sendet Vorwarnungen an Teilnehmer von Terminen.
+
+      Der Zeitpunkt, zu dem die Vorwarnung versendet wird, ergibt sich aus:
+
+      a. der Vorwarnzeit und
+      b. der Frequenz, mit der dieser CronJob gestartet wird.
+
+      Die Frequenz muss zwischen 2 und 120 Minuten liegen. Dieser CronJob arbeitet nur dann zuverlässig,
+      wenn er regelmässig läuft.
+      
+      Beispiel:
+      - Schrittgröße des Cronjobs: 5 min
+      - Vorwarnzeit: 10 min
+      - jetzt 16:35
+      
+      Es werden für alle Termine eine Mail verschickt, die
+      - heute starten und
+      - eine Startzeit von 16:45 - 16:49 haben.
+    -->
+    <Trigger Name="CalendarNotificationPremonitionTrigger" Group="stdCronTriggerGroup" Prio="1"
+      Enabled="false">
+      <Schedule>
+        <Minutes Value="*" Stepsize="5" />
+        <Hours Value="0-21" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="CalendarNotificationPremonition">
+        <JobParameter>
+
+          <!--
+            Die Mail erinnert an heute startende Termine, wenn dieser Parameter angegeben ist.
+            Hier in Komibnation mit der Vorwarnzeit (sofern unten angegeben).
+          -->
+          <Param Name="notifyAboutTodaysEvents" Value="true" />
+
+          <!-- vgl. oben -->
+          <Param Name="notifyAboutInsertedEvents" Value="false" />
+
+          <!-- vgl. oben -->
+          <Param Name="notifyAboutUpdatedEvents" Value="false" />
+
+          <!-- Aktiviert zeitgesteuerte Benachrichtigungsmails (am Termin) -->
+          <Param Name="notifyAboutEventsWithNotificationEntry" Value="true" />
+
+          <!--
+            Die Vorwarnzeit. Insgesamt gelten folgende Bedingungen:
+
+            1. Vorwarnzeit >= 3min
+            2. Abstand zwischen zwei Cronjob-Läufen max. 120 min
+            3. Abstand zwischen zwei Cronjob-Läufen min. 2 min
+            4. Abstand zwischen zwei Cronjob-Läufen < (Vorwarnzeit-1) in min.
+
+            Eine gute Kombination wäre z.B. Vorwarnzeit 10min, Cronjob läuft alle 5min.
+          -->
+          <Param Name="notifyAboutEventsPremonitionTime" Value="10" />
+
+          <!-- vgl. oben -->
+          <Param Name="notifyForeignEventsOnly" Value="true" />
+
+          <!-- iCalendar-Einträge (ics) als Attachment senden -->
+          <Param Name="sendICalAttachments" Value="false" />
+
+          <!-- vgl. oben -->
+          <Param Name="notifyAboutEventSubtypes" Value="event MilestoneEvent" />
+
+          <!--
+            Liste der Einladungstypen, die über Termine und Änderungen daran informiert werden
+          -->
+          <Param Name="notifyEventRefTypes" Value="Master Guest" />
+
+          <!--
+            Liste der Einladungstypen, die über Ablehnungen/Zustimmungen zu Terminen informiert werden
+          -->
+          <Param Name="notifyAboutInvitationChanges" Value="Master" />
+
+          <!--
+            Liste mit Termin-Status, bei denen keine E-Mail-Benachrichtigung versandt wird. (z.B. bei
+            abgesagten Terminen)
+          -->
+          <Param Name="preventNotifyAboutCancelledStates" Value="Canceled Done" />
+
+          <!--
+            Liste mit Termin-Einladungsstatus, bei denen keine E-Mail-Benachrichtigung versandt wird.
+            (z.B. bei abgelehnten Terminen)
+          -->
+          <Param Name="preventNotifyAboutRejectedInvitationStates" Value="Rejected" />
+
+          <!--
+            Für in Projektron BCS angelegte Personen kann geprüft werden, ob Sie sich anmelden können
+            und nur dann eine E-Mail erhalten. Dies ist das Standardverhalten. Es kann komplett deaktiviert
+            werden, wenn Value="false" gesetzt wird. Alternativ kann man Positiv- und Negativlisten von
+            JUser-Subtypen angeben:
+
+            Value="true=subtype1,subtype2,subtype3 false=subtype4,subtype5"
+
+            Dabei gilt: Alle Subtypen, die dann nicht explizit erwähnt werden, werden geprüft (also als
+            ob sie bei true=... gelistet wären)!
+          -->
+          <Param Name="checkUserLoginAllowed" Value="true" />
+          <Param Name="checkUserStartAndEndDate" Value="true" />
+
+          <!--
+            Benennt Attribute an Terminen, deren Werte geändert werden können sollen, ohne dass eine
+            Benachrichtigung an die Teilnehmer abgeschickt wird. Die Namen der Attribute sind durch ein
+            Leerzeichen voneinander zu trennen.
+          -->
+          <Param Name="ignoreChangesOfAttributes" Value="" />
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!-- Überprüfung der Pausen-Buchungen der Mitarbeiter -->
+    <Trigger Name="CheckPauseTrigger" Group="stdCronTriggerGroup" Prio="1" Enabled="false">
+      <Schedule>
+        <Minutes Value="10" Stepsize="0" />
+        <Hours Value="3" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="CheckPause">
+        <JobParameter>
+
+          <!-- Leerzeichen-separierte Liste von Empfänger Mailadressen -->
+          <Param Name="recipients" Value="empfaenger@domain.de empfaenger2@domain.de" />
+
+          <!--
+            Schwellwerte für minimale Pausenzeiten, Format [ab X min.]=[minimal Y min. Pause]
+          -->
+          <Param Name="pauseThresholds" Value="0=0 360=30 540=45" />
+
+          <!--
+            Bestimmt, ob Tages-Arbeitszeitsoll (true) oder tatsächlich gebuchte Zeit (false) für die
+            Berechnung herangezogen werden soll.
+          -->
+          <Param Name="useDeputatForPauseCalculation" Value="false" />
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!-- Führt einen Export durch -->
+    <Trigger Name="ExportJobTrigger" Group="stdCronTriggerGroup" Prio="1" Enabled="false">
+      <Schedule>
+        <Minutes Value="20" Stepsize="0" />
+        <Hours Value="3" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="ExportJob">
+        <JobParameter>
+
+          <!-- Voll qualifizierter Name derjenigen Datei, die den Export konfiguriert. -->
+          <Param Name="ExportConfigFile" Value="" />
+
+          <!--
+            Voll qualifizierter Name derjenigen Datei, die durch den Export erzeugt werden soll. Wird
+            als Velocity-Template interpretiert. Dort sind die folgenden Variablen bekannt:
+
+            $year := das aktuelle Jahr
+            $month := der aktuelle Monat
+            $day := der aktuelle Tag
+            $hour := die aktuelle Stunde
+            $minute := die aktuelle Minute
+            $second := die aktuelle Sekunde
+            $i18n := ein I18n zum Internationalisieren
+            $user := der User, der die Bearbeitung ausführt
+          -->
+          <Param Name="ExportTargetFile" Value="" />
+
+          <!-- Die Oid desjenigen Objektes, welches als Context verwendet wird. -->
+          <Param Name="ContextOid" Value="3_JProjects" />
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!-- Führt einen Import durch -->
+    <Trigger Name="ImportJobTrigger" Group="stdCronTriggerGroup" Prio="1" Enabled="false">
+      <Schedule>
+        <Minutes Value="30" Stepsize="0" />
+        <Hours Value="3" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="ImportJob">
+        <JobParameter>
+
+          <!--
+            Voll qualifizierter Name derjenigen Datei, die den Import konfiguriert.
+          -->
+          <Param Name="ImportConfigFile" Value="" />
+
+          <!--
+            Pfad zu einem Verzeichnis, welches nach Import-Dateien durchsucht wird.
+          -->
+          <Param Name="ImportDir" Value="" />
+
+          <!--
+            Regulärer Ausruck zum Filtern der Dateien aus dem ImportDir. Alle Dateien aus dem ImportDir,
+            die diesem Filter genügen, werden importiert.
+          -->
+          <Param Name="ImportFileRegularExpression" Value="" />
+
+          <!--
+            Sollen die Dateien nach dem Import unabhängig vom Erfolg des Imports gelöscht werden?
+          -->
+          <Param Name="DeleteFilesOnExit" Value="false" />
+
+          <!--
+            Wenn mehrere Dateien importiert werden: Soll nach einem Fehler abgebrochen werden?
+          -->
+          <Param Name="StopOnError" Value="true" />
+
+          <!-- Die Oid desjenigen Objektes, welches als Context verwendet wird. -->
+          <Param Name="ContextOid" Value="3_JProjects" />
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      Liest E-Mails von Mail-Accounts und speichert sie als Anmerkungen zu Personen und/oder Projekten/Aufgaben.
+      Voraussetzungen:
+
+      1. Konfigurierte Anmerkungslisten. Je nachdem in welche Listen die Anmerkungen gespeichert werden
+      sollen, müssen die entsprechenden Anmerkungslisten für Personen und/oder Projekte konfiguriert
+      werden.
+      2. Damit für ein Objekt E-Mails importiert werden muss das E-Mail-Import-Konto des Objekts eingerichtet
+      werden.
+
+      Dieser CronJob sollte alle 10 Minuten laufen. Für den Projekt-E-Mailimport gibt es die Möglichkeit,
+      über einen gemeinsamen, hier konfigurierten Importaccount und anhand der Projekt-ID im Betreff
+      E-Mails für Projekte zu importieren. Weitere Informationen dazu sind bei den entsprechenden Optionen
+      zu finden.
+      
+      Beachten Sie, dass an anderer Stelle der SMTP-Server korrekt konfiguriert ist. Dies ist eine Voraussetzung.
+      damit der E-Mail-Import Cronjob ohne Fehler läuft.
+    -->
+    <Trigger Name="MailImportTrigger" Group="stdCronTriggerGroup" Prio="1" Enabled="false">
+      <Schedule>
+        <Minutes Value="*" Stepsize="10" />
+        <Hours Value="0-21" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="MailImport">
+        <JobParameter>
+
+          <!-- MailImport global ein- bzw. ausschalten -->
+          <Param Name="Active" Value="true" />
+
+          <!-- Mailserver-Protokoll ('pop3', 'pop3s' (SSL), 'imap' oder 'imaps' (SSL)) -->
+          <Param Name="Protocol" Value="pop3" />
+
+          <!-- Verwendung von TLS erlauben -->
+          <Param Name="EnableTLS" Value="false" />
+
+          <!-- Adresse des Mailservers (z.B. 'pop.meinedomain.de') -->
+          <Param Name="MailServer" Value="" />
+
+          <!--
+            Port des Mailservers (Standard für pop3 '110', für imap '143', '995' für pop3s und '993'
+            für imaps).
+          -->
+          <Param Name="MailServerPort" Value="110" />
+          
+          
+          <!-- 
+            Bei 'true' werden CC-Adressen, die in BCS Personen zugeordnet sind, direkt als 
+            <em>Weitere Beteiligte</em> an importierten Tickets vermerkt anstelle die Adressen in das Feld 
+            <em>Weitere E-Mail-Adressen</em> einzutragen. -->
+          <Param Name="KnownCCAddressesAreAdditionalNotificationRecipients" Value="false" />
+
+          <!--
+            Import-Objektarten, für welche E-Mails importiert werden sollen (durch Leerzeichen getrennt).
+            Standard ist 'JUser JProject', JTask ist auch möglich 'JTask JUser JProject'.
+          -->
+          <Param Name="ImportObjectTypes" Value="JUser JProject" />
+          <!-- <Param Name="ImportObjectTypes" Value="JTask JUser JProject" /> -->
+
+          <!--
+            Wenn das Flag mit 'true' gesetzt ist, werden keine Mails von internen Absendern an interne
+            Empfänger importiert. Die Prüfung wird nur bei Organisationen und Personen durchgeführt.
+            Als Werte sind 'true' oder 'false' möglich. Default-Wert ist 'false', der Import wird also
+            durchgeführt.
+          -->
+          <!-- <Param Name="RejectInternalMails" Value="true" /> -->
+
+          <!--
+            Für Personen: Importiert auch E-Mails von Absendern, deren Mailadresse nicht als Datensatz
+            vorhanden ist.
+          -->
+          <Param Name="JUser.AcceptUnknownSenders" Value="true" />
+
+          <!--
+            Für Personen: Domains, von denen keine E-Mails importiert werden sollen (durch Leerzeichen
+            getrennt, z.B. "meinefirma.de anderefirma.de unerwuenscht.de")
+          -->
+          <Param Name="JUser.IgnoreSenderMailDomains" Value="" />
+
+          <!--
+            Für Projekte: Importiert auch E-Mails von Absendern, deren Mailadresse nicht als Datensatz
+            vorhanden ist
+          -->
+          <Param Name="JProject.AcceptUnknownSenders" Value="true" />
+
+          <!--
+            Für Projekte: Domains, von denen keine E-Mails importiert werden sollen (durch Leerzeichen
+            getrennt, z.B. "meinefirma.de anderefirma.de unerwuenscht.de")
+          -->
+          <Param Name="JProject.IgnoreSenderMailDomains" Value="" />
+
+          <!--
+            Für Aufgaben: Importiert auch E-Mails von Absendern, deren Mailadresse nicht als Datensatz
+            vorhanden ist
+          -->
+          <Param Name="JTask.AcceptUnknownSenders" Value="true" />
+
+          <!--
+            Für Aufgaben: Domains, von denen keine E-Mails importiert werden sollen (durch Leerzeichen
+            getrennt, z.B. "meinefirma.de anderefirma.de unerwuenscht.de")
+          -->
+          <Param Name="JTask.IgnoreSenderMailDomains" Value="" />
+
+          <!--
+            Bestimmt die Detailstufe der Logeinträge (Fehler werden immer eingetragen):
+
+            - '0' := globale Zusammenfassung,
+            - '1' := Zusammenfassung je Import-Objekt oder
+            - '2' := Auflistung aller gelesenen E-Mails.
+          -->
+          <Param Name="LogLevel" Value="0" />
+
+          <!--
+            Projekt-E-Mailimport mit Identifikation über ProjektID im Betreff
+          -->
+
+          <!-- Globaler Projekt-E-Mailimport aktiv? -->
+          <Param Name="GlobalProjectImport.Active" Value="false" />
+
+          <!--
+            Globaler Projekt-E-Mailimport: Lösche E-Mails vom Server, wenn Importversuch erfolglos?
+          -->
+          <Param Name="GlobalProjectImport.DeleteOnError" Value="false" />
+
+          <!--
+            Globaler Projekt-E-Mailimport: Importiere E-Mails, auch wenn kein Projekt gefunden wurde?
+          -->
+          <Param Name="GlobalProjectImport.AcceptUnknownProjects" Value="false" />
+
+          <!--
+            Dieser Schlüssel legt fest, ob die im CC einer Mail angegebenen Adressen mit dem Ticket abgespeichert
+            werden soll.
+          -->
+          <!-- <Param Name="GlobalProjectImport.IgnoreCC" Value="false" /> -->
+
+
+          <!-- Globaler Projekt-E-Mailimport: Username für Mailserver -->
+          <!-- <Param Name="GlobalProjectImport.Username" Value="" /> -->
+
+          <!-- Globaler Projekt-E-Mailimport: Passwort für Mailserver -->
+          <!-- <Param Name="GlobalProjectImport.Password" Value="" /> -->
+
+          <!--
+            Regulärer Ausdruck (java.util.regex.Pattern) zur Identifikation der ProjektID innerhalb des
+            E-Mail-Betreffs.
+
+            Im Standard lautet der Ausdruck '^#([\p{Graph}\S]*).*' verwendet. Dieser passt auf #ProjektID
+            am Anfang des Betreffs.
+
+            Wichtig dabei ist die 'capture group' zum Auslesen der ProjektID.
+          -->
+          <!-- <Param Name="GlobalProjectImport.SubjectPattern" Value="" /> -->
+
+          <!--
+            IMAP-spezifische Optionen. Mögliche Werte:
+
+            - 'IMAP_Folders' oder
+            - 'IMAP_Flags'.
+          -->
+          <!-- <Param Name="GlobalProjectImport.IMAPMode" Value="" /> -->
+
+          <!-- Basisverzeichnis des IMAP-Imports, z.B. 'INBOX/import' -->
+          <!-- <Param Name="GlobalProjectImport.BaseFolder" Value="" /> -->
+
+          <!--
+            Konfigurationsoptionen für IMAP_Folders-Modus - Verzeichnis für Verschiebung im Erfolgsfall,
+            z.B. 'INBOX/import_success'.
+          -->
+          <!-- <Param Name="GlobalProjectImport.SuccessFolder" Value="" /> -->
+
+          <!--
+            Verzeichnis für Verschiebung im Fehlerfall, z.B. 'INBOX/import_errors'.
+          -->
+          <!-- <Param Name="GlobalProjectImport.ErrorFolder" Value="" /> -->
+
+          <!--
+            Konfigurationsoptionen für IMAP_Flags-Modus - Flag bei erfolgreichem Import. Mögliche Werte:
+
+            - 'flagged',
+            - 'seen' oder
+            - 'answered'.
+          -->
+          <!--
+            <Param Name="GlobalProjectImport.ImportedFlag" Value="flagged" />
+          -->
+
+          <!--
+            Mit Hilfe dieses Parameters kann bestimmt werden, wie in der global konfigurierten Mailbox
+            mit den E-Mails in Bezug auf den Ticket-E-Mailimport umgegangen werden soll. Mögliche Werte
+            sind:
+            - 'allAsTicket' := Alle zu importierenden E-Mails werden in Form von Tickets importiert.
+                               ACHTUNG: diese Einstellung funktioniert NICHT, wenn der auch
+                               der Globale Mailimport aktiviert ist.
+            - 'noneAsTicket' := Gegenstück zu 'allAsTicket'. Alle E-Mails werden als "normal"
+                                zu importierende E-Mails behandelt.
+            - 'TOisTicketMail' := Nur solche E-Mails werden als Tickets importiert, die direkt
+                                  ('TO'-Feld) an die E-Mail-Adresse des Objekts gerichtet sind.
+            - 'TOorCCisTicketMail' := E-Mails, welche direkt ('TO'-Feld) oder indirekt ('CC'-Feld) an die
+                                      E-Mail-Adresse des Objekts gerichtet sind, werden als Tickets importiert.
+          -->
+          <!--
+            <Param Name="GlobalProjectImport.TicketMailImportMode" Value="TOisTicketMail" />
+          -->
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      Automatisches Anlegen von Urlaubsbudgets.
+
+      Sucht nach Personen die einen der Subtypen aus dem Parameter 'UserSubtypes' haben. Wenn es für
+      eine gefundene Person kein Urlaubsbudget gibt wird eines nach einer der beiden folgenden Varianten
+      erzeugt.
+
+      Variante 1 (ServerConfig.properties "VacationService.useFlexibleVacationBugets=false"):
+      Als "Jahresumbruch" gilt der 1.1. des Jahres. Wenn das aktuelle Datum vor dem definierten Abstand
+      ('BudgetCreationOffset') zum Jahreswechsel (01.01. des nächsten Jahres) liegt, wird ein Budget
+      für das aktuelle Jahr angelegt. Wenn nicht wird das Budget für das nächste Jahr erzeugt.
+
+      Variante 2 (ServerConfig.properties "VacationService.useFlexibleVacationBugets=true"):
+      Als "Jahresumbruch" gilt das Startdatum des Benutzerkontos des aktuellen Nutzers. Wenn das aktuelle
+      Datum vor dem definierten Abstand ('BudgetCreationOffset') zum Jahreswechsel (jährliche Wiederholung
+      des Startdatums des Benutzerkontos im nächsten Jahr) liegt, wird ein Budget für das aktuelle Jahr
+      angelegt. Wenn nicht wird das Budget für das nächste Jahr erzeugt.
+    -->
+    <Trigger Name="ManageVacationBudgetsTrigger" Group="stdCronTriggerGroup" Prio="1"
+      Enabled="false">
+      <Schedule>
+        <Minutes Value="50" Stepsize="0" />
+        <Hours Value="3" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="ManageVacationBudgets">
+        <JobParameter>
+
+          <!--
+            Legt fest, ob der Job automatisch neue Urlaubsbudgets erstellen soll.
+          -->
+          <Param Name="AutoCreateNewBudgets" Value="true" />
+
+          <!--
+            Abstand zum Jahreswechsel, ab dem neue Budgets erzeugt werden in Tagen.
+          -->
+          <Param Name="BudgetCreationOffset" Value="60" />
+
+          <!--
+            Subtypen von Personen für die Urlaubsbudgets bearbeitet werden sollen.
+          -->
+          <Param Name="UserSubtypes" Value="employee" />
+
+          <!--
+            Urlaubsbudgets werden in diesem Status erzeugt. Mögliche Werte:
+
+            - opened
+            - closed
+            - planned
+          -->
+          <Param Name="BudgetState" Value="opened" />
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <!--
+      Verschickt per Mail eine Warnung an Mitarbeiter, die sich mit ihrer Zeiterfassung im Rückstand
+      befinden.
+    -->
+    <Trigger Name="RemindRecordingTimeTrigger" Group="stdCronTriggerGroup" Prio="1" Enabled="false">
+      <Schedule>
+        <Minutes Value="10" Stepsize="0" />
+        <Hours Value="4" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="RemindRecordingTime">
+        <JobParameter>
+
+          <!--
+            Mails werden überhaupt nur dann verschickt, wenn mindestens 'minWorkingDays' Arbeitstage
+            im aktuellen Monat vergangen sind.
+          -->
+          <Param Name="minWorkingDays" Value="5" />
+
+          <!--
+            Ein Mitarbeiter erhält eine Mail, wenn die Abweichung zwischen Soll- und Ist-Arbeitszeit
+            größer als 'min' Prozent seines Wochen-Deputats ist. Soll- und Ist-Arbeitszeit werden vom
+            Monatsanfang bis heute (=Zeitpunkt der Jobausführung) berechnet. Das Wochendeputat ist konstant,
+            daher ist auch die erlaubte Abweichung konstant.
+
+            Beispiel: Ein Mitarbeiter arbeitet 40 Std/Woche. Von diesen 40 Stunden werden 8 Std bei 80%
+            (40 Std * 0.8 = 32 Std -> 40-32 = 8) als maximale Abweichung berechnet. Mit diesem Wert wird
+            die aktuelle Abweichung zwischen Soll- und Ist-Aufwand verglichen. Eine Warnung wird dann
+            verschickt, wenn Soll - Ist > 8 Std.
+          -->
+          <Param Name="min" Value="80" />
+
+          <!--
+            Läuft der CronJob vor dieser Uhrzeit (in Minutes z.B. 6h = 360) so wird bis zum gestrigen
+            Tag ausgewertet, läuft er nach dieser Uhrzeit so wird inklusive des hetigen Tages ausgewertet.
+
+            Format: Uhrzeit in Minuten (z.B. 6h = 360)
+          -->
+          <!-- <Param Name="includeEffortsOfTodayMinutes" Value="360" /> -->
+
+          <!--
+            Optional können Sie hier Titelzeile und Text der zu versendenden Nachrichten einstellen.
+            Im Body sind folgende Platzhalter erlaubt:
+
+            {0}: Prozentzahl "min",
+            {1}: Deputat und
+            {2}: Geleistete Stunden.
+          -->
+          <!-- <Param Name="subject" Value="[text]" /> -->
+          <!-- <Param Name="body" Value="[text]" /> -->
+
+          <!--
+            Optional können Sie festlegen, ob nur die Nutzer benachrichtigt werden sollen, die sich nach
+            dem letzten Lauf dieses Jobs am System angemeldet haben.
+          -->
+          <!-- <Param Name="checkLoginHistory" Value="true" /> -->
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+
+    <!--
+      Verschickt per Mail eine Liste aller Mitarbeiter, die sich mit ihrer Zeiterfassung im Rückstand
+      befinden. Die Adressen der Empfänger dieser Mail sind unten anzugeben.
+    -->
+    <Trigger Name="SummarizeRecordingTimesTrigger" Group="stdCronTriggerGroup" Prio="1"
+      Enabled="false">
+      <Schedule>
+        <Minutes Value="15" Stepsize="0" />
+        <Hours Value="4" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="SummarizeRecordingTimes">
+        <JobParameter>
+
+          <!--
+            Mails werden überhaupt nur dann verschickt, wenn mindestens 'minWorkingDays' Arbeitstage
+            im aktuellen Monat vergangen sind.
+          -->
+          <Param Name="minWorkingDays" Value="5" />
+
+          <!-- Die Mail-Adressen, an die Mail verschickt werden sollen -->
+          <Param Name="recipients" Value="[mail1@your.domain] [mail2@your.domain] [...]" />
+
+          <!--
+            Ein Mitarbeiter wird in der Mail aufgeführt, wenn die Abweichung zwischen seiner Soll- und
+            Ist-Arbeitszeit größer als 'min' Prozent seines Wochen-Deputats ist. Soll- und Ist-Arbeitszeit
+            werden vom Monatsanfang bis heute (=Zeitpunkt der Jobausführung) berechnet. Das Wochendeputat
+            ist konstant, daher ist auch die erlaubte Abweichung konstant.
+          -->
+          <Param Name="min" Value="80" />
+
+          <!--
+            Läuft der CronJob vor dieser Uhrzeit (in Minuten z.B. 6h = 360) so wird bis zum gestrigen
+            Tag ausgewertet, läuft er nach dieser Uhrzeit so findet die Auswertung inklusive des heutigen
+            Tages statt.
+          -->
+          <!-- <Param Name="includeEffortsOfTodayMinutes" Value="360" /> -->
+
+          <!--
+            Optional können Sie hier Titelzeile und Text der zu versendenden Nachrichten einstellen.
+          -->
+          <!-- <Param Name="subject" Value="[text]" /> -->
+          <!-- <Param Name="body" Value="[text]" /> -->
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <Trigger Name="TicketAutoEscalationTrigger" Group="stdCronTriggerGroup" Prio="1"
+      Enabled="false">
+      <Schedule>
+        <Minutes Value="25" Stepsize="0" />
+        <Hours Value="4" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="TicketAutoEscalation">
+        <JobParameter>
+
+          <!--
+            Bestimmt, ob Tickets, die zu lange im Status "neu" sind, eskaliert werden sollen.
+          -->
+          <Param Name="EscalateOnTooLongNewState" Value="true" />
+
+          <!--
+            Bestimmt, ob Tickets, die zu lange nicht geändert worden sind, eskaliert werden sollen.
+          -->
+          <Param Name="EscalateOnTooLongUnchanged" Value="false" />
+
+          <!--
+            Bestimmt, ob Tickets, deren interner Termin überschritten ist, eskaliert werden sollen.
+          -->
+          <Param Name="EscalateOnInternalCompletionDatePassed" Value="false" />
+
+          <!--
+            Bestimmt, ob Tickets, deren externer Termin überschritten ist, eskaliert werden sollen.
+          -->
+          <Param Name="EscalateOnExternalCompletionDatePassed" Value="false" />
+
+          <!--
+            Bestimmt, ob ein Termin als überschritten gilt, wenn der Termin heute ist.
+          -->
+          <Param Name="EscalateIfCompletionDateIsToday" Value="false" />
+
+          <!--
+            Liste der Status, in denen ein Ticket als neu gelten soll, Leerzeichen getrennt.
+          -->
+          <Param Name="NewTicketStates" Value="010-eingetragen" />
+
+          <!--
+            Liste der Status, in denen ein Ticket als abgeschlossen gelten soll, Leerzeichen getrennt.
+            Abgeschlossene Tickets werden nicht eskaliert.
+          -->
+          <Param Name="CompletedTicketStates" Value="090-abnahme 100-Geschlossen" />
+
+          <!--
+            Bestimmt, wieviele Minuten ein Ticket im Status neu bleiben darf, bevor es eskaliert wird.
+            Hier 7 Tage.
+          -->
+          <Param Name="MaxNewStateDuration" Value="10080" />
+
+          <!--
+            Bestimmt, wieviele Minuten ein nicht abgeschlossenes Ticket ungeändert bleiben darf, bevor
+            es eskaliert wird. Hier 4 Wochen.
+          -->
+          <Param Name="MaxUnchangedDuration" Value="40320" />
+
+          <!--
+            Bestimmt, ob der Bearbeiter entfernt werden soll, wenn das Ticket zu lange nicht bearbeitet
+            wurde.
+          -->
+          <Param Name="RemoveWorkerOnTooLongUnchanged" Value="false" />
+
+          <!--
+            Liste der Status, die ein Ticket haben muss, damit der Bearbeiter ggf. entfernt wird. Getrennt
+            durch Leerzeichen.
+          -->
+          <Param Name="RemoveWorkerTicketStates" Value="080-inarbeit" />
+
+          <!--
+            Bestimmt, wieviele Minuten ein Ticket ungeändert bleiben darf, bevor der Bearbeiter entfernt
+            wird. Hier 7 Tage.
+          -->
+          <Param Name="RemoveWorkerMaxUnchangedDuration" Value="10080" />
+
+          <!--
+            Ein JEXL-Ausdruck, der true oder false liefern soll je nachdem, ob ein Ticket eskaliert werden
+            soll oder nicht. Der Ausdruck kennt den folgenden Context:
+
+            - 'base' := Eine Repräsentation des Tickets als Base-Objekt.
+          -->
+          <Param Name="RemoveWorkerJexlFilter" Value="" />
+
+        </JobParameter>
+      </Jobref>
+    </Trigger>
+
+    <Trigger Name="CreateBaseplanSnapshots" Group="snapshotTriggers" Prio="1" Enabled="false">
+      <Schedule>
+        <Minutes Value="35" Stepsize="0" />
+        <Hours Value="4" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="CreateSnapshots">
+        <JobParameter>
+
+          <!-- Legt fest, für welchen Snapshot-Subtypen der Snapshot erzeugt werden soll. -->
+          <Param Name="SnapshotSubtype" Value="baseplan" />
+
+          <!--
+            Legt fest, auf welcher Zeitbasis die Werte erzeugt werden sollen. Mögliche Werte sind:
+
+            - 'none',
+            - 'daily',
+            - 'weekly' und
+            - 'monthly'.
+
+            Dadurch kann erzwungen werden, dass es nur einen Snapshot je Zeiteinheit geben darf, bestehende
+            Snapshots für diesen Zeitraum werden dann aktualisiert.
+          -->
+          <Param Name="SnapshotTimeBase" Value="daily" />
+        </JobParameter>
+
+      </Jobref>
+    </Trigger>
+    
+    <Trigger Name="NotifyAboutDeliveryFailures" Group="stdNightlyGroup" Prio="1" Enabled="false">
+      <Schedule>
+        <Minutes Value="45" Stepsize="0" />
+        <Hours Value="5" Stepsize="0" />
+        <DayOfMonth Value="*" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="?" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="NotifyAboutDeliveryFailures">
+      <JobParameter>
+        <!-- Liste von Empfängern (Mail-Adressen) -->
+        <!-- <Param Name="recipients_by_mail" Value="mail1@domain mail2@domain" /> -->
+        
+        <!-- Liste von Empfängern (Oids von Nutzern, deren "mail"-Attribut verwendet wird) -->
+        <!-- <Param Name="recipients_by_oid" Value="123_JUser 124_JUser" /> -->
+      </JobParameter>
+    </Jobref>
+    </Trigger>
+
+    <!--
+      Pflegt Historieneinträge für die Auswertung Projekt => Auswertung => Historie (alt).
+      Ab Release 7.2 veraltet und durch stdMaintainEffortHistoryTrigger ersetzt.
+
+      Jeder Aufruf fügt der Historie weitere Einträge mit dem Stand zum Zeitpunkt der Ausführung hinzu.
+      Der CronJob sollte höchstens ein Mal pro Tag laufen. Wir empfehlen, ihn in der Nacht laufen zu
+      lassen. Der CronJob kann täglich oder auch seltener laufen, z.B. wöchentlich. Letzteres schont
+      die Systemressourcen, weil weniger Daten generiert werden. Letzlich hängt die Granularität der
+      Historie aber von den Anforderungen des Nutzers ab.
+    -->
+    <Trigger Name="oldMaintainEffortHistoryTrigger" Group="stdNightlyGroup" Prio="1"
+      Enabled="false">
+      <Schedule>
+        <Minutes Value="0" Stepsize="0" />
+        <Hours Value="5" Stepsize="0" />
+        <DayOfMonth Value="?" Stepsize="0" Workday="false" />
+        <Month Value="*" Stepsize="0" />
+        <DayOfWeek Value="FRI" Stepsize="0" />
+      </Schedule>
+      <Jobref Jobname="MaintainEffortHistory" />
+    </Trigger>
+  </Triggers>
+</BcsSchedule>
